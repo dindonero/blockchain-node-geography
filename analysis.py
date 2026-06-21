@@ -1,5 +1,5 @@
 """
-Reproducibility script for "The Geography of Blockchain Infrastructure" (course edition).
+Reproducibility script for "The Geography of Blockchain Infrastructure".
 
 Reads the assembled country-level dataset (master.gpkg) and reproduces every
 statistic reported in the paper: exploratory spatial data analysis (Moran's I,
@@ -206,6 +206,6 @@ gwr_block("eth_rate", "eth")
 
 
 # ---------------- write results ----------------
-with open(os.path.join(HERE, "results_course.json"), "w") as f:
+with open(os.path.join(HERE, "results.json"), "w") as f:
     json.dump(RES, f, indent=1)
-print("wrote results_course.json")
+print("wrote results.json")

@@ -1,11 +1,12 @@
 # Reproducibility bundle: The Geography of Blockchain Infrastructure
 
-Minimal data and code to reproduce every statistic in the paper *The geography of blockchain infrastructure: spatial clustering, wealth, and the limits of aspatial decentralization metrics* (course edition). Single-authored course project for Advanced Topics in Geospatial Analysis (Tópicos Avançados em Análise Geoespacial), NOVA IMS.
+Minimal data and code to reproduce every statistic in the paper *The geography of blockchain infrastructure: spatial clustering, wealth, and the limits of aspatial decentralization metrics*. The paper itself (`paper.pdf`) is included in this repository.
 
 ## Contents
 
 | File | What it is |
 |---|---|
+| `paper.pdf` | The paper. |
 | `master.csv` | The assembled country-level dataset, human-readable (one row per country). |
 | `master.gpkg` | The same dataset with country boundary geometries, used to build the spatial weights. |
 | `analysis.py` | One script that reproduces all reported statistics from `master.gpkg`. |
@@ -20,7 +21,7 @@ pip install -r requirements.txt
 python analysis.py
 ```
 
-The script prints every reported number and writes `results_course.json`. Runtime is a few minutes (the MGWR bandwidth search is the slow part).
+The script prints every reported number and writes `results.json`. Runtime is a few minutes (the MGWR bandwidth search is the slow part).
 
 ## Dataset columns (`master.csv`)
 
