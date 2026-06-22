@@ -214,6 +214,8 @@ def gwr_block(yvar, label):
     ols = sm.OLS(yz, sm.add_constant(Xz)).fit()
     p = Xz.shape[1] + 2
     ols_aicc = 2 * p - 2 * ols.llf + (2 * p * (p + 1)) / (len(d2) - p - 1)
+    np.random.seed(42)
+    ols_rm = Moran(np.asarray(ols.resid).ravel(), w, permutations=9999)  # OLS residual autocorrelation -> motivates local model
     # GWR (single bandwidth)
     bw = Sel_BW(co, yz, Xz, kernel="bisquare", fixed=False).search(criterion="AICc")
     gwr = GWR(co, yz, Xz, bw, kernel="bisquare", fixed=False).fit()
@@ -227,8 +229,12 @@ def gwr_block(yvar, label):
     cooks = np.asarray(gwr.cooksD).ravel()                      # GWR influence (MGWR cooksD unavailable)
     np.random.seed(42)
     rm_mg = Moran(np.asarray(mg.resid_response).ravel(), w, permutations=9999)
+    gdp_local = np.asarray(mg.params)[:, 1]                      # standardized local GDP coefficient surface
+    top3 = s.iloc[np.argsort(gdp_local)[::-1][:3]]["ne_name"].tolist()
     RES[f"gwr_{label}"] = {
         "ols_aicc": round(float(ols_aicc), 1), "ols_adjR2": round(float(ols.rsquared_adj), 3),
+        "ols_resid_moran_I": round(float(ols_rm.I), 3), "ols_resid_moran_p": float(ols_rm.p_sim),
+        "mgwr_gdp_coef_max": round(float(gdp_local.max()), 2), "mgwr_gdp_coef_top3": top3,
         "gwr_bw": int(bw), "gwr_aicc": round(float(gwr.aicc), 1),
         "gwr_adjR2": round(float(gwr.adj_R2), 3), "gwr_ENP": round(float(gwr.tr_S), 1),
         "mgwr_aicc": round(float(mg.aicc), 1), "mgwr_adjR2": round(float(mg.adj_R2), 3),
@@ -247,6 +253,8 @@ def gwr_block(yvar, label):
           f"| MGWR adjR2={r['mgwr_adjR2']} ENP={r['mgwr_ENP']}")
     print(f"  MGWR bandwidths: {r['mgwr_bandwidths']}")
     print(f"  MGWR significant countries / 140: {r['mgwr_sig_countries']}")
+    print(f"  OLS resid Moran I={r['ols_resid_moran_I']} (p={r['ols_resid_moran_p']}) | "
+          f"MGWR GDP local coef max={r['mgwr_gdp_coef_max']} top={r['mgwr_gdp_coef_top3']}")
     print(f"  local CN max={r['mgwr_local_CN_max']} (n>30: {r['mgwr_local_CN_over30']}) | "
           f"GWR Cook's D max={r['gwr_cooksD_max']} | resid Moran after MGWR={r['mgwr_resid_moran_I']} "
           f"(p={r['mgwr_resid_moran_p']})\n")
