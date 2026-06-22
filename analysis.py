@@ -61,8 +61,9 @@ def esda_block(var, label):
     cls = np.where(sig, QUAD[li.q], "ns")
     counts = {q: int((cls == q).sum()) for q in ["HH", "LL", "HL", "LH"]}
     gi = G_Local(y, w, star=True, permutations=9999, seed=42)
-    hot = int(((gi.Zs > 0) & (gi.p_sim < 0.05)).sum())
-    cold = int(((gi.Zs < 0) & (gi.p_sim < 0.05)).sum())
+    gcut = fdr(gi.p_sim, 0.05)                                  # FDR cutoff for Gi* (same multiple-testing fix as LISA)
+    hot = int(((gi.Zs > 0) & (gi.p_sim < gcut)).sum())
+    cold = int(((gi.Zs < 0) & (gi.p_sim < gcut)).sum())
     RES[f"esda_{label}"] = {
         "moran_I": round(float(mi.I), 4), "moran_z": round(float(mi.z_sim), 2),
         "moran_p": float(mi.p_sim), "fdr_cutoff": round(float(cut), 4),
@@ -181,6 +182,8 @@ def nb_glm(count_var, label):
         "irr_ci95": {k: [round(float(np.exp(nb.conf_int().loc[k, 0])), 3),
                           round(float(np.exp(nb.conf_int().loc[k, 1])), 3)] for k in nb.params.index},
         "gdp_elasticity": round(float(nb.params["log_gdp_pc"]), 3),
+        "gdp_rate_multiplier_10x": round(float(10 ** nb.params["log_gdp_pc"]), 1),
+        "irr_elec_per_0p1": round(float(np.exp(nb.params["usd_per_kwh"] * 0.10)), 3),
         "resid_moran_I": round(float(rm.I), 3), "resid_moran_p": float(rm.p_sim),
     }
     print(f"[NB-GLM {label}] Poisson disp={pois_disp:.0f} -> NB alpha={alpha:.3f} | "
@@ -250,6 +253,30 @@ def gwr_block(yvar, label):
 
 gwr_block("btc_rate", "btc")
 gwr_block("eth_rate", "eth")
+
+
+# ---------------- 5. descriptive table and derived quantities reported in text ----------------
+desc, dvars = {}, {"btc_rate": "btc_per_million", "eth_rate": "eth_per_million",
+                   "gdp_pc": "gdp_per_capita_usd", "internet_pct": "internet_pct",
+                   "usd_per_kwh": "electricity_usd_kwh"}
+for col, name in dvars.items():
+    v = s[col].astype(float)
+    desc[name] = {k: round(float(getattr(v, k)()), 3) for k in ["mean", "median", "std", "min", "max"]}
+popm = s["population"].astype(float) / 1e6
+desc["population_millions"] = {k: round(float(getattr(popm, k)()), 2) for k in ["mean", "median", "std", "min", "max"]}
+RES["descriptives"] = desc
+RES["gdp_internet_corr"] = round(float(np.corrcoef(np.log(s["gdp_pc"]), s["internet_pct"])[0, 1]), 3)
+el = np.log1p(s["eth_el_nodes"].values / s["population"].values * 1e6)
+cl = np.log1p(s["eth_cl_nodes"].values / s["population"].values * 1e6)
+RES["eth_el_cl_lograte_corr"] = round(float(np.corrcoef(el, cl)[0, 1]), 3)
+us_rate = float(s.loc[s["iso2"] == "US", "btc_rate"].iloc[0])
+RES["us_btc_rate_rank"] = int((s["btc_rate"] > us_rate).sum() + 1)
+print(f"[descriptives] Table 1 reproduced (6 variables): btc_rate mean={desc['btc_per_million']['mean']} "
+      f"sd={desc['btc_per_million']['std']}; gdp_pc mean={desc['gdp_per_capita_usd']['mean']:.0f}")
+print(f"  GDP-internet r={RES['gdp_internet_corr']} | EL-CL log-rate r={RES['eth_el_cl_lograte_corr']} | "
+      f"US per-capita rank={RES['us_btc_rate_rank']}/140 | "
+      f"GDP 10x multiplier btc={RES['glm_btc']['gdp_rate_multiplier_10x']} eth={RES['glm_eth']['gdp_rate_multiplier_10x']} | "
+      f"elec IRR/0.1 btc={RES['glm_btc']['irr_elec_per_0p1']} eth={RES['glm_eth']['irr_elec_per_0p1']}\n")
 
 
 # ---------------- write results ----------------
