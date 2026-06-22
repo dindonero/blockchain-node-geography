@@ -78,6 +78,28 @@ RES["btc_eth_rate_pearson"] = round(float(np.corrcoef(
     np.log1p(s["btc_rate"]), np.log1p(s["eth_rate"]))[0, 1]), 3)
 print(f"  Bitcoin-Ethereum log-rate correlation r={RES['btc_eth_rate_pearson']}\n")
 
+# weight-matrix sensitivity: Moran's I across k = 4..10 (the report claims stability)
+RES["moran_k_sensitivity"] = {}
+for lab, var in [("btc", "btc_rate"), ("eth", "eth_rate")]:
+    vals = []
+    for k in range(4, 11):
+        wk = libpysal.weights.KNN.from_array(coords, k=k); wk.transform = "R"
+        vals.append(round(float(moran_global(np.log1p(s[var].values), wk).I), 3))
+    RES["moran_k_sensitivity"][lab] = {"k4_10": vals, "min": min(vals), "max": max(vals)}
+print(f"[k-sensitivity] Moran's I, k=4..10: "
+      f"btc {RES['moran_k_sensitivity']['btc']['min']}-{RES['moran_k_sensitivity']['btc']['max']} | "
+      f"eth {RES['moran_k_sensitivity']['eth']['min']}-{RES['moran_k_sensitivity']['eth']['max']}")
+
+# Empirical Bayes-adjusted Moran's I (Assuncao-Reis rate standardization): the conservative
+# bound for unstable small-population rates (the report flags Ethereum as an upper bound)
+from esda.moran import Moran_Rate
+for lab, cnt in [("btc", "btc_nodes"), ("eth", "eth_nodes")]:
+    np.random.seed(42)
+    mr = Moran_Rate(s[cnt].values, s["population"].values, w, permutations=9999)
+    RES[f"eb_moran_{lab}"] = {"moran_I": round(float(mr.I), 3), "p": float(mr.p_sim)}
+print(f"[EB Moran] btc={RES['eb_moran_btc']['moran_I']} (p={RES['eb_moran_btc']['p']}) | "
+      f"eth={RES['eb_moran_eth']['moran_I']} (p={RES['eb_moran_eth']['p']})\n")
+
 
 # ---------------- 2. concentration vs clustering ----------------
 def concentration(counts):
@@ -120,6 +142,13 @@ d["general_ban"] = (d["reg_status"] == "general_ban").astype(int)
 X = sm.add_constant(d[["log_gdp_pc", "internet_pct", "usd_per_kwh", "partial_ban", "general_ban"]])
 off = np.log(d["population"].values)
 
+# multicollinearity check (apparent-overdispersion workflow): VIFs on the shared design matrix
+from statsmodels.stats.outliers_influence import variance_inflation_factor
+_vcols = ["log_gdp_pc", "internet_pct", "usd_per_kwh", "partial_ban", "general_ban"]
+RES["vif"] = {c: round(float(variance_inflation_factor(X.values, i + 1)), 2)
+              for i, c in enumerate(_vcols)}
+print(f"[VIF] {RES['vif']} | max={max(RES['vif'].values())} (rule-of-thumb < 7.5)")
+
 def profile_alpha_mle(y, lo=1e-3, hi=50.0):
     """Profile-likelihood MLE of the NB2 dispersion alpha (more honest here than the
     Cameron-Trivedi auxiliary regression, which is dominated by the few large-mean countries)."""
@@ -136,10 +165,14 @@ def nb_glm(count_var, label):
     pois_disp = float(pois.pearson_chi2 / pois.df_resid)        # Poisson overdispersion check
     alpha = profile_alpha_mle(y)
     nb = sm.GLM(y, X, family=sm.families.NegativeBinomial(alpha=alpha), offset=off).fit()
+    lr_pois_nb = 2.0 * (nb.llf - pois.llf)                       # LR test: Poisson rejected vs NB
+    n_zero = int((y == 0).sum())                                 # excess zeros (ZIP would target these)
     np.random.seed(42)
     rm = Moran(nb.resid_deviance, w, permutations=9999)          # residual spatial autocorrelation
     RES[f"glm_{label}"] = {
         "poisson_dispersion": round(pois_disp, 1),
+        "lr_poisson_vs_nb": round(float(lr_pois_nb), 1),
+        "n_zero_countries": n_zero,
         "alpha_mle": round(alpha, 3),
         "pearson_chi2_df": round(float(nb.pearson_chi2 / nb.df_resid), 2),
         "deviance_explained": round(1 - nb.deviance / nb.null_deviance, 3),
@@ -151,6 +184,7 @@ def nb_glm(count_var, label):
         "resid_moran_I": round(float(rm.I), 3), "resid_moran_p": float(rm.p_sim),
     }
     print(f"[NB-GLM {label}] Poisson disp={pois_disp:.0f} -> NB alpha={alpha:.3f} | "
+          f"LR(Pois vs NB)={lr_pois_nb:.0f} | zeros={n_zero}/140 | "
           f"chi2/df={RES[f'glm_{label}']['pearson_chi2_df']} devExpl={RES[f'glm_{label}']['deviance_explained']}")
     print(f"  IRR: {RES[f'glm_{label}']['irr']}")
     print(f"  p:   {RES[f'glm_{label}']['pvalues']}")
@@ -185,6 +219,11 @@ def gwr_block(yvar, label):
     msel.search(criterion="AICc", multi_bw_min=[10], multi_bw_max=[len(d2)])
     mg = MGWR(co, yz, Xz, selector=msel, kernel="bisquare", fixed=False).fit()
     tv = mg.filter_tvals()                                      # corrected-t local significance
+    # local diagnostics: condition numbers (MGWR), Cook's distance (GWR), residual Moran after MGWR
+    cn = np.asarray(mg.local_collinearity()[0]).ravel()         # per-location condition numbers
+    cooks = np.asarray(gwr.cooksD).ravel()                      # GWR influence (MGWR cooksD unavailable)
+    np.random.seed(42)
+    rm_mg = Moran(np.asarray(mg.resid_response).ravel(), w, permutations=9999)
     RES[f"gwr_{label}"] = {
         "ols_aicc": round(float(ols_aicc), 1), "ols_adjR2": round(float(ols.rsquared_adj), 3),
         "gwr_bw": int(bw), "gwr_aicc": round(float(gwr.aicc), 1),
@@ -194,12 +233,20 @@ def gwr_block(yvar, label):
         "mgwr_bandwidths": {nm: int(b) for nm, b in zip(names, msel.bw[0])},
         "mgwr_ENP_j": {nm: round(float(e), 1) for nm, e in zip(names, np.asarray(mg.ENP_j).ravel())},
         "mgwr_sig_countries": {nm: int((tv[:, i] != 0).sum()) for i, nm in enumerate(names)},
+        "mgwr_local_CN_max": round(float(cn.max()), 1),
+        "mgwr_local_CN_over30": int((cn > 30).sum()),
+        "gwr_cooksD_max": round(float(cooks.max()), 2),
+        "mgwr_resid_moran_I": round(float(rm_mg.I), 3),
+        "mgwr_resid_moran_p": float(rm_mg.p_sim),
     }
     r = RES[f"gwr_{label}"]
     print(f"[(M)GWR {label}] AICc OLS={r['ols_aicc']} GWR={r['gwr_aicc']}(bw {r['gwr_bw']}) MGWR={r['mgwr_aicc']} "
           f"| MGWR adjR2={r['mgwr_adjR2']} ENP={r['mgwr_ENP']}")
     print(f"  MGWR bandwidths: {r['mgwr_bandwidths']}")
-    print(f"  MGWR significant countries / 140: {r['mgwr_sig_countries']}\n")
+    print(f"  MGWR significant countries / 140: {r['mgwr_sig_countries']}")
+    print(f"  local CN max={r['mgwr_local_CN_max']} (n>30: {r['mgwr_local_CN_over30']}) | "
+          f"GWR Cook's D max={r['gwr_cooksD_max']} | resid Moran after MGWR={r['mgwr_resid_moran_I']} "
+          f"(p={r['mgwr_resid_moran_p']})\n")
 
 gwr_block("btc_rate", "btc")
 gwr_block("eth_rate", "eth")
