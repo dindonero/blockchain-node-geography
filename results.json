@@ -1,0 +1,409 @@
+{
+ "esda_btc": {
+  "moran_I": 0.4844,
+  "moran_z": 11.38,
+  "moran_p": 0.0001,
+  "fdr_cutoff": 0.0157,
+  "lisa_fdr_counts": {
+   "HH": 17,
+   "LL": 25,
+   "HL": 1,
+   "LH": 1
+  },
+  "gistar_hot": 18,
+  "gistar_cold": 26,
+  "HH_countries": [
+   "United Kingdom",
+   "Switzerland",
+   "Spain",
+   "Portugal",
+   "Norway",
+   "Netherlands",
+   "Luxembourg",
+   "Liechtenstein",
+   "Italy",
+   "Ireland",
+   "Iceland",
+   "Germany",
+   "Estonia",
+   "Denmark",
+   "Belgium",
+   "Austria",
+   "Andorra"
+  ]
+ },
+ "esda_eth": {
+  "moran_I": 0.5058,
+  "moran_z": 11.87,
+  "moran_p": 0.0001,
+  "fdr_cutoff": 0.0232,
+  "lisa_fdr_counts": {
+   "HH": 22,
+   "LL": 39,
+   "HL": 1,
+   "LH": 3
+  },
+  "gistar_hot": 25,
+  "gistar_cold": 40,
+  "HH_countries": [
+   "United Kingdom",
+   "Switzerland",
+   "Sweden",
+   "Spain",
+   "Portugal",
+   "Poland",
+   "Norway",
+   "Netherlands",
+   "Luxembourg",
+   "Lithuania",
+   "Liechtenstein",
+   "Latvia",
+   "Ireland",
+   "Iceland",
+   "Germany",
+   "France",
+   "Finland",
+   "Estonia",
+   "Denmark",
+   "Belgium",
+   "Austria",
+   "Andorra"
+  ]
+ },
+ "btc_eth_rate_pearson": 0.908,
+ "moran_k_sensitivity": {
+  "btc": {
+   "k4_10": [
+    0.496,
+    0.508,
+    0.484,
+    0.477,
+    0.486,
+    0.478,
+    0.477
+   ],
+   "min": 0.477,
+   "max": 0.508
+  },
+  "eth": {
+   "k4_10": [
+    0.53,
+    0.533,
+    0.506,
+    0.488,
+    0.486,
+    0.489,
+    0.484
+   ],
+   "min": 0.484,
+   "max": 0.533
+  }
+ },
+ "eb_moran_btc": {
+  "moran_I": 0.244,
+  "p": 0.0001
+ },
+ "eb_moran_eth": {
+  "moran_I": 0.094,
+  "p": 0.0169
+ },
+ "concentration_btc": {
+  "nakamoto": 3,
+  "gini": 0.824,
+  "hhi": 0.145,
+  "top5_share": 0.615
+ },
+ "concentration_eth": {
+  "nakamoto": 3,
+  "gini": 0.842,
+  "hhi": 0.139,
+  "top5_share": 0.628
+ },
+ "concentration_mining": {
+  "nakamoto": 2,
+  "gini": 0.947,
+  "hhi": 0.214,
+  "top5_share": 0.833
+ },
+ "shares_moran_btc": {
+  "moran_I": 0.1829,
+  "p": 0.0005
+ },
+ "shares_moran_eth": {
+  "moran_I": 0.1917,
+  "p": 0.0001
+ },
+ "shares_moran_mining": {
+  "moran_I": 0.0955,
+  "p": 0.0193
+ },
+ "mining_vs_nodes_spearman": 0.56,
+ "vif": {
+  "log_gdp_pc": 5.23,
+  "internet_pct": 4.16,
+  "usd_per_kwh": 1.71,
+  "partial_ban": 1.14,
+  "general_ban": 1.13
+ },
+ "glm_btc": {
+  "poisson_dispersion": 15.1,
+  "lr_poisson_vs_nb": 1015.5,
+  "n_zero_countries": 60,
+  "nb_predicted_zeros": 59.6,
+  "aic": {
+   "poisson": 1652,
+   "nb2": 636,
+   "zip": 1649,
+   "zinb": 640
+  },
+  "gdp_pvalue_robust": 1.9406477787963014e-13,
+  "alpha_mle": 0.663,
+  "pearson_chi2_df": 1.37,
+  "deviance_explained": 0.838,
+  "irr": {
+   "const": 0.0,
+   "log_gdp_pc": 4.7,
+   "internet_pct": 1.014,
+   "usd_per_kwh": 1.336,
+   "partial_ban": 0.269,
+   "general_ban": 0.058
+  },
+  "pvalues": {
+   "const": 0.0,
+   "log_gdp_pc": 0.0,
+   "internet_pct": 0.2641,
+   "usd_per_kwh": 0.8132,
+   "partial_ban": 0.0001,
+   "general_ban": 0.0
+  },
+  "irr_ci95": {
+   "const": [
+    0.0,
+    0.0
+   ],
+   "log_gdp_pc": [
+    3.354,
+    6.586
+   ],
+   "internet_pct": [
+    0.989,
+    1.039
+   ],
+   "usd_per_kwh": [
+    0.121,
+    14.816
+   ],
+   "partial_ban": [
+    0.137,
+    0.529
+   ],
+   "general_ban": [
+    0.018,
+    0.187
+   ]
+  },
+  "gdp_elasticity": 1.548,
+  "gdp_rate_multiplier_10x": 35.3,
+  "irr_elec_per_0p1": 1.029,
+  "resid_moran_I": 0.153,
+  "resid_moran_p": 0.001
+ },
+ "glm_eth": {
+  "poisson_dispersion": 366.2,
+  "lr_poisson_vs_nb": 8845.1,
+  "n_zero_countries": 58,
+  "nb_predicted_zeros": 57.4,
+  "aic": {
+   "poisson": 9745,
+   "nb2": 900,
+   "zip": 9713,
+   "zinb": 904
+  },
+  "gdp_pvalue_robust": 8.910048246757242e-07,
+  "alpha_mle": 2.349,
+  "pearson_chi2_df": 3.71,
+  "deviance_explained": 0.646,
+  "irr": {
+   "const": 0.0,
+   "log_gdp_pc": 5.332,
+   "internet_pct": 1.047,
+   "usd_per_kwh": 35.029,
+   "partial_ban": 10.309,
+   "general_ban": 0.272
+  },
+  "pvalues": {
+   "const": 0.0,
+   "log_gdp_pc": 0.0,
+   "internet_pct": 0.0073,
+   "usd_per_kwh": 0.0633,
+   "partial_ban": 0.0,
+   "general_ban": 0.0647
+  },
+  "irr_ci95": {
+   "const": [
+    0.0,
+    0.0
+   ],
+   "log_gdp_pc": [
+    3.257,
+    8.73
+   ],
+   "internet_pct": [
+    1.012,
+    1.083
+   ],
+   "usd_per_kwh": [
+    0.822,
+    1493.451
+   ],
+   "partial_ban": [
+    4.493,
+    23.654
+   ],
+   "general_ban": [
+    0.068,
+    1.082
+   ]
+  },
+  "gdp_elasticity": 1.674,
+  "gdp_rate_multiplier_10x": 47.2,
+  "irr_elec_per_0p1": 1.427,
+  "resid_moran_I": 0.32,
+  "resid_moran_p": 0.0001
+ },
+ "gwr_btc": {
+  "ols_aicc": 284.6,
+  "ols_adjR2": 0.576,
+  "ols_resid_moran_I": 0.173,
+  "ols_resid_moran_p": 0.0003,
+  "mgwr_gdp_coef_max": 2.42,
+  "mgwr_gdp_coef_top3": [
+   "Finland",
+   "Estonia",
+   "Latvia"
+  ],
+  "gwr_localR2_median": 0.69,
+  "gwr_localR2_max": 0.83,
+  "gwr_bw": 52,
+  "gwr_aicc": 224.6,
+  "gwr_adjR2": 0.77,
+  "gwr_ENP": 22.8,
+  "mgwr_aicc": 204.2,
+  "mgwr_adjR2": 0.836,
+  "mgwr_ENP": 36.0,
+  "mgwr_bandwidths": {
+   "intercept": 102,
+   "log_gdp_pc": 13,
+   "internet_pct": 139,
+   "usd_per_kwh": 41
+  },
+  "mgwr_ENP_j": {
+   "intercept": 2.5,
+   "log_gdp_pc": 26.3,
+   "internet_pct": 1.1,
+   "usd_per_kwh": 6.2
+  },
+  "mgwr_sig_countries": {
+   "intercept": 119,
+   "log_gdp_pc": 44,
+   "internet_pct": 0,
+   "usd_per_kwh": 1
+  },
+  "mgwr_local_CN_max": 4.2,
+  "mgwr_local_CN_over30": 0,
+  "gwr_cooksD_max": 0.33,
+  "mgwr_resid_moran_I": -0.057,
+  "mgwr_resid_moran_p": 0.1139
+ },
+ "gwr_eth": {
+  "ols_aicc": 280.4,
+  "ols_adjR2": 0.588,
+  "ols_resid_moran_I": 0.233,
+  "ols_resid_moran_p": 0.0001,
+  "mgwr_gdp_coef_max": 2.5,
+  "mgwr_gdp_coef_top3": [
+   "Estonia",
+   "Finland",
+   "Latvia"
+  ],
+  "gwr_localR2_median": 0.61,
+  "gwr_localR2_max": 0.84,
+  "gwr_bw": 61,
+  "gwr_aicc": 238.2,
+  "gwr_adjR2": 0.736,
+  "gwr_ENP": 19.5,
+  "mgwr_aicc": 205.0,
+  "mgwr_adjR2": 0.87,
+  "mgwr_ENP": 48.0,
+  "mgwr_bandwidths": {
+   "intercept": 17,
+   "log_gdp_pc": 13,
+   "internet_pct": 53,
+   "usd_per_kwh": 43
+  },
+  "mgwr_ENP_j": {
+   "intercept": 16.3,
+   "log_gdp_pc": 23.4,
+   "internet_pct": 3.0,
+   "usd_per_kwh": 5.2
+  },
+  "mgwr_sig_countries": {
+   "intercept": 41,
+   "log_gdp_pc": 54,
+   "internet_pct": 47,
+   "usd_per_kwh": 51
+  },
+  "mgwr_local_CN_max": 14.9,
+  "mgwr_local_CN_over30": 0,
+  "gwr_cooksD_max": 0.31,
+  "mgwr_resid_moran_I": -0.094,
+  "mgwr_resid_moran_p": 0.0111
+ },
+ "descriptives": {
+  "btc_per_million": {
+   "mean": 1.55,
+   "median": 0.064,
+   "std": 3.971,
+   "min": 0.0,
+   "max": 24.722
+  },
+  "eth_per_million": {
+   "mean": 5.804,
+   "median": 0.077,
+   "std": 17.836,
+   "min": 0.0,
+   "max": 158.365
+  },
+  "gdp_per_capita_usd": {
+   "mean": 22912.977,
+   "median": 9482.033,
+   "std": 30414.361,
+   "min": 413.758,
+   "max": 206780.59
+  },
+  "internet_pct": {
+   "mean": 76.72,
+   "median": 85.982,
+   "std": 23.056,
+   "min": 8.95,
+   "max": 100.0
+  },
+  "electricity_usd_kwh": {
+   "mean": 0.159,
+   "median": 0.138,
+   "std": 0.105,
+   "min": 0.003,
+   "max": 0.447
+  },
+  "population_millions": {
+   "mean": 55.1,
+   "median": 11.21,
+   "std": 175.4,
+   "min": 0.04,
+   "max": 1450.94
+  }
+ },
+ "gdp_internet_corr": 0.846,
+ "eth_el_cl_lograte_corr": 0.928,
+ "us_btc_rate_rank": 16
+}

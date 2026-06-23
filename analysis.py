@@ -167,13 +167,28 @@ def nb_glm(count_var, label):
     alpha = profile_alpha_mle(y)
     nb = sm.GLM(y, X, family=sm.families.NegativeBinomial(alpha=alpha), offset=off).fit()
     lr_pois_nb = 2.0 * (nb.llf - pois.llf)                       # LR test: Poisson rejected vs NB
-    n_zero = int((y == 0).sum())                                 # excess zeros (ZIP would target these)
+    n_zero = int((y == 0).sum())                                 # observed zeros
+    mu = np.asarray(nb.predict())                                # fitted NB mean (incl. offset)
+    nb_pred_zeros = float(((1.0 + alpha * mu) ** (-1.0 / alpha)).sum())  # NB-predicted zero count
+    aic = {"poisson": round(float(pois.aic)), "nb2": round(float(nb.aic))}
+    from statsmodels.discrete.count_model import ZeroInflatedPoisson, ZeroInflatedNegativeBinomialP
+    for nm, M in [("zip", ZeroInflatedPoisson), ("zinb", ZeroInflatedNegativeBinomialP)]:
+        try:
+            aic[nm] = round(float(M(y, X, offset=off).fit(disp=0, maxiter=300).aic))
+        except Exception:
+            aic[nm] = None
+    nb_robust = sm.GLM(y, X, family=sm.families.NegativeBinomial(alpha=alpha),
+                       offset=off).fit(cov_type="HC1")            # heteroskedasticity-robust SEs
+    gdp_p_robust = float(nb_robust.pvalues["log_gdp_pc"])
     np.random.seed(42)
     rm = Moran(nb.resid_deviance, w, permutations=9999)          # residual spatial autocorrelation
     RES[f"glm_{label}"] = {
         "poisson_dispersion": round(pois_disp, 1),
         "lr_poisson_vs_nb": round(float(lr_pois_nb), 1),
         "n_zero_countries": n_zero,
+        "nb_predicted_zeros": round(nb_pred_zeros, 1),
+        "aic": aic,
+        "gdp_pvalue_robust": gdp_p_robust,
         "alpha_mle": round(alpha, 3),
         "pearson_chi2_df": round(float(nb.pearson_chi2 / nb.df_resid), 2),
         "deviance_explained": round(1 - nb.deviance / nb.null_deviance, 3),
@@ -187,8 +202,9 @@ def nb_glm(count_var, label):
         "resid_moran_I": round(float(rm.I), 3), "resid_moran_p": float(rm.p_sim),
     }
     print(f"[NB-GLM {label}] Poisson disp={pois_disp:.0f} -> NB alpha={alpha:.3f} | "
-          f"LR(Pois vs NB)={lr_pois_nb:.0f} | zeros={n_zero}/140 | "
+          f"LR(Pois vs NB)={lr_pois_nb:.0f} | zeros obs={n_zero} NB-pred={nb_pred_zeros:.0f}/140 | "
           f"chi2/df={RES[f'glm_{label}']['pearson_chi2_df']} devExpl={RES[f'glm_{label}']['deviance_explained']}")
+    print(f"  AIC {aic} | GDP p (robust HC1)={gdp_p_robust:.1e}")
     print(f"  IRR: {RES[f'glm_{label}']['irr']}")
     print(f"  p:   {RES[f'glm_{label}']['pvalues']}")
     print(f"  residual Moran's I={rm.I:.3f} (p={rm.p_sim})\n")
@@ -231,10 +247,12 @@ def gwr_block(yvar, label):
     rm_mg = Moran(np.asarray(mg.resid_response).ravel(), w, permutations=9999)
     gdp_local = np.asarray(mg.params)[:, 1]                      # standardized local GDP coefficient surface
     top3 = s.iloc[np.argsort(gdp_local)[::-1][:3]]["ne_name"].tolist()
+    lr2 = np.asarray(gwr.localR2).ravel()                        # GWR local R^2 (MGWR per-location R2 not exposed by mgwr)
     RES[f"gwr_{label}"] = {
         "ols_aicc": round(float(ols_aicc), 1), "ols_adjR2": round(float(ols.rsquared_adj), 3),
         "ols_resid_moran_I": round(float(ols_rm.I), 3), "ols_resid_moran_p": float(ols_rm.p_sim),
         "mgwr_gdp_coef_max": round(float(gdp_local.max()), 2), "mgwr_gdp_coef_top3": top3,
+        "gwr_localR2_median": round(float(np.median(lr2)), 2), "gwr_localR2_max": round(float(lr2.max()), 2),
         "gwr_bw": int(bw), "gwr_aicc": round(float(gwr.aicc), 1),
         "gwr_adjR2": round(float(gwr.adj_R2), 3), "gwr_ENP": round(float(gwr.tr_S), 1),
         "mgwr_aicc": round(float(mg.aicc), 1), "mgwr_adjR2": round(float(mg.adj_R2), 3),
@@ -254,7 +272,8 @@ def gwr_block(yvar, label):
     print(f"  MGWR bandwidths: {r['mgwr_bandwidths']}")
     print(f"  MGWR significant countries / 140: {r['mgwr_sig_countries']}")
     print(f"  OLS resid Moran I={r['ols_resid_moran_I']} (p={r['ols_resid_moran_p']}) | "
-          f"MGWR GDP local coef max={r['mgwr_gdp_coef_max']} top={r['mgwr_gdp_coef_top3']}")
+          f"MGWR GDP local coef max={r['mgwr_gdp_coef_max']} top={r['mgwr_gdp_coef_top3']} | "
+          f"GWR local R2 median={r['gwr_localR2_median']} max={r['gwr_localR2_max']}")
     print(f"  local CN max={r['mgwr_local_CN_max']} (n>30: {r['mgwr_local_CN_over30']}) | "
           f"GWR Cook's D max={r['gwr_cooksD_max']} | resid Moran after MGWR={r['mgwr_resid_moran_I']} "
           f"(p={r['mgwr_resid_moran_p']})\n")
